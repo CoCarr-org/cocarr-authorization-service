@@ -1,10 +1,25 @@
 const { Op } = require('sequelize');
-const { RoleAssignment, Delegation, Role, Permission, Policy } = require('../models');
+const {
+  RoleAssignment, Delegation, Role, Permission, PermissionSet, Policy,
+} = require('../models');
 
 // PERMISSION RESOLUTION — the one answer to "what may this principal do?".
-// Steps: active role assignments + active delegations -> roles -> permissions,
-// then apply policies (allow adds, DENY WINS). A super-admin role short-circuits
-// to "all". Temporary access and delegations are honoured via their time windows.
+//
+// Steps: active role assignments + active delegations -> roles -> permissions
+// (direct AND via permission sets), then apply policies (allow adds, DENY WINS).
+// A super-admin role short-circuits to "all". Temporary access and delegations
+// are honoured purely by their time windows — resolution filters on `now` every
+// call, so nothing needs a cron to expire.
+//
+// PERMISSION SETS fold in HERE, and that is the whole reason the join exists: a
+// set nothing consults is worse than no set at all, because it reads as a grant
+// that holds. A role's permissions are the UNION of its direct permissions and
+// the permissions of every ACTIVE set it holds.
+//
+// SCOPE: assignments may carry an `organizationId`. It is REPORTED (see
+// `scopes`) but does NOT yet narrow the permission list — enforcing it means
+// every call site passing the organization it is acting in, which is a
+// deliberate later step. Do not describe scoped assignments as enforced.
 async function effective(principalId) {
   const now = new Date();
   const notExpired = { [Op.or]: [{ expiresAt: null }, { expiresAt: { [Op.gt]: now } }] };
@@ -15,13 +30,38 @@ async function effective(principalId) {
   });
 
   const roleIds = [...new Set([...assignments.map((a) => a.roleId), ...delegations.map((d) => d.roleId)])];
-  if (roleIds.length === 0) return { principalId, superAdmin: false, roles: [], permissions: [] };
+  if (roleIds.length === 0) {
+    return {
+      principalId, superAdmin: false, roles: [], permissionSets: [], permissions: [], scopes: [],
+    };
+  }
 
-  const roles = await Role.findAll({ where: { id: roleIds }, include: [{ model: Permission, through: { attributes: [] } }] });
+  const roles = await Role.findAll({
+    where: { id: roleIds },
+    include: [
+      { model: Permission, through: { attributes: [] } },
+      {
+        model: PermissionSet,
+        through: { attributes: [] },
+        required: false,
+        include: [{ model: Permission, through: { attributes: [] } }],
+      },
+    ],
+  });
   const superAdmin = roles.some((r) => r.isSuperAdmin);
 
   const perms = new Set();
-  roles.forEach((r) => (r.permissions || []).forEach((p) => perms.add(p.key)));
+  const setsHeld = new Map();
+  roles.forEach((r) => {
+    (r.permissions || []).forEach((p) => perms.add(p.key));
+    (r.permissionSets || []).forEach((s) => {
+      // An inactive set grants nothing — deactivating one must actually remove
+      // access, not merely hide it from the editor.
+      if (!s.isActive) return;
+      setsHeld.set(s.id, { id: s.id, key: s.key, name: s.name });
+      (s.permissions || []).forEach((p) => perms.add(p.key));
+    });
+  });
 
   // Policies matching this principal or any of its roles. Ordered by priority.
   const policies = await Policy.findAll({
@@ -35,7 +75,10 @@ async function effective(principalId) {
     principalId,
     superAdmin,
     roles: roles.map((r) => ({ id: r.id, key: r.key, isSuperAdmin: r.isSuperAdmin })),
+    permissionSets: [...setsHeld.values()],
     permissions: [...perms].sort(),
+    // Reported, not enforced — see the note above.
+    scopes: [...new Set(assignments.map((a) => a.organizationId).filter(Boolean))],
   };
 }
 

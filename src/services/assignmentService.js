@@ -4,15 +4,20 @@ const { RoleAssignment, Role } = require('../models');
 const audit = require('./auditService');
 
 // Assign a role to a principal. `expiresAt` (optional) makes it TEMPORARY ACCESS.
-async function assign({ principalId, roleId, scope, expiresAt, reason }, actorUid) {
+async function assign({
+  principalId, roleId, scope, organizationId, expiresAt, reason,
+}, actorUid) {
   if (!principalId || !roleId) throw new CustomError('principalId and roleId are required', 400, 'VALIDATION_ERROR');
   const role = await Role.findByPk(roleId);
   if (!role) throw new CustomError('Role not found', 404, 'NOT_FOUND');
   const assignment = await RoleAssignment.create({
-    principalId, roleId, scope: scope || null,
+    principalId,
+    roleId,
+    scope: scope || null,
+    organizationId: organizationId || null,
     expiresAt: expiresAt || null, reason: reason || null, grantedByUid: actorUid || null,
   });
-  await audit.log({ actorUid, action: 'assignment.create', targetType: 'principal', targetId: principalId, changes: { roleId, expiresAt: expiresAt || null } });
+  await audit.log({ actorUid, action: 'assignment.create', targetType: 'principal', targetId: principalId, changes: { roleId, organizationId: organizationId || null, expiresAt: expiresAt || null } });
   return assignment;
 }
 

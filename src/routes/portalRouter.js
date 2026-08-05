@@ -9,8 +9,8 @@ const router = express.Router();
 const ctrl = makeCrudController(service);
 const validate = (req, res, next) => { try { assertValid(req); next(); } catch (e) { next(e); } };
 
-router.get('/', ctrl.list);
-router.get('/:id', ctrl.get);
+router.get('/', authenticate, ctrl.list);
+router.get('/:id', authenticate, ctrl.get);
 router.post('/', [authenticate,
   check('productId').notEmpty().withMessage('productId is required'),
   check('key').notEmpty().withMessage('key is required'),
