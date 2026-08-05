@@ -4,5 +4,5 @@ const ctrl = require('../controllers/assignmentController');
 const router = express.Router();
 router.post('/', authenticate, ctrl.assign);               // { principalId, roleId, expiresAt? }
 router.delete('/:id', authenticate, ctrl.revoke);
-router.get('/principal/:principalId', ctrl.listForPrincipal); // ?activeOnly=true
+router.get('/principal/:principalId', authenticate, ctrl.listForPrincipal); // ?activeOnly=true
 module.exports = router;
