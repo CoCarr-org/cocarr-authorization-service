@@ -1,36 +1,15 @@
 // THE PLATFORM TAXONOMY — Product > Portal > Module > SubModule > Action.
 //
-// GENERATED FROM the real navigation of cocarr-platform-web
-// (`src/app/_helpers/navConfig.js`, 17 groups / 63 pages / 21 RBAC modules) so the
-// IAM tree and the sidebar people actually use cannot disagree on day one. The
-// dynamic UI (charter: "menus, routes, sidebar, buttons generated from IAM;
-// nothing is hardcoded") renders from this, so anything missing here is a screen
-// that vanishes — that is why it was extracted rather than retyped.
+// GENERATED — do not edit by hand. Run:
+//     node scripts/generateTaxonomy.js
+// after any change to cocarr-platform-web's navConfig.js, then re-seed.
 //
-// PRODUCT OWNERSHIP follows the charter, and the split is the one decision here
-// that is a judgement call rather than a transcription:
-//   platform    the Administration, Settings and System groups + the five IAM
-//               modules that have no screen yet (organizations, iamTaxonomy,
-//               permissions, approvalChains, featureFlags)
-//   workspace   employees, orgStructure, recruitment, accessRequests — exactly
-//               the WORKSPACE_MODULES list the web app already declares
-//   operations  everything else: bookings, hosts, vehicles, payments, users,
-//               marketing, support, reports and master data
+// It is derived from the real navigation (not maintained beside it) so the IAM
+// tree and the sidebar people actually use cannot drift apart. The dynamic UI
+// renders from this, so anything missing here is a screen that vanishes.
 //
-// MASTER DATA (cities, brands, protection plans) sits under operations, not
-// platform: it is business reference data an ops team edits, not platform
-// configuration. The Settings group goes the other way, being the charter's
-// "Global Settings".
-//
-// A MODULE IS KEYED BY THE RBAC MODULE, not the nav group. Several groups feed
-// one module — 'payouts' collects pages from both Hosts and Finance — and access
-// is argued about per module, so that is the unit the taxonomy uses.
-//
-// A SUBMODULE'S KEY IS ITS ROUTE. Already unique, already stable, and already
-// what the client navigates by; a parallel slug vocabulary would be two lists to
-// keep in step, and they drift (the same conclusion cocarr-core-api reached).
-//
-// To regenerate after a nav change, see scripts/seedTaxonomy.js.
+// Product ownership, module keying and the sub-module-key-is-its-route rule are
+// documented in scripts/generateTaxonomy.js alongside the code that applies them.
 const PRODUCTS = [
   {
     "key": "platform",
@@ -85,7 +64,7 @@ const PRODUCTS = [
           },
           {
             "key": "roles",
-            "name": "Administration",
+            "name": "Teams & Access",
             "route": "/dashboard/teams-access",
             "icon": "settings",
             "sortOrder": 20,
@@ -124,9 +103,9 @@ const PRODUCTS = [
           },
           {
             "key": "auditLogs",
-            "name": "Administration",
+            "name": "Audit",
             "route": "/dashboard/admin-activity",
-            "icon": "settings",
+            "icon": "docs",
             "sortOrder": 30,
             "permissions": [
               {
@@ -175,7 +154,7 @@ const PRODUCTS = [
           },
           {
             "key": "security",
-            "name": "Administration",
+            "name": "Security",
             "route": "/dashboard/admin-logins",
             "icon": "settings",
             "sortOrder": 40,
@@ -225,11 +204,122 @@ const PRODUCTS = [
             ]
           },
           {
-            "key": "integrations",
+            "key": "settings",
             "name": "Settings",
-            "route": "/dashboard/integrations",
+            "route": "/dashboard/general-settings",
             "icon": "settings",
             "sortOrder": 50,
+            "permissions": [
+              {
+                "key": "platform.settings.read",
+                "action": "read"
+              },
+              {
+                "key": "platform.settings.create",
+                "action": "create"
+              },
+              {
+                "key": "platform.settings.update",
+                "action": "update"
+              },
+              {
+                "key": "platform.settings.delete",
+                "action": "delete"
+              }
+            ],
+            "subModules": [
+              {
+                "key": "/dashboard/general-settings",
+                "name": "General",
+                "route": "/dashboard/general-settings",
+                "sortOrder": 10,
+                "permissions": [
+                  {
+                    "key": "platform.settings.general-settings.read",
+                    "action": "read"
+                  }
+                ]
+              },
+              {
+                "key": "/dashboard/settings-business",
+                "name": "Company Profile",
+                "route": "/dashboard/settings-business",
+                "sortOrder": 20,
+                "permissions": [
+                  {
+                    "key": "platform.settings.settings-business.read",
+                    "action": "read"
+                  }
+                ]
+              },
+              {
+                "key": "/dashboard/settings-payments",
+                "name": "Payment Gateways",
+                "route": "/dashboard/settings-payments",
+                "sortOrder": 30,
+                "permissions": [
+                  {
+                    "key": "platform.settings.settings-payments.read",
+                    "action": "read"
+                  }
+                ]
+              },
+              {
+                "key": "/dashboard/settings-maps",
+                "name": "Maps",
+                "route": "/dashboard/settings-maps",
+                "sortOrder": 40,
+                "permissions": [
+                  {
+                    "key": "platform.settings.settings-maps.read",
+                    "action": "read"
+                  }
+                ]
+              },
+              {
+                "key": "/dashboard/settings-tax",
+                "name": "Tax",
+                "route": "/dashboard/settings-tax",
+                "sortOrder": 50,
+                "permissions": [
+                  {
+                    "key": "platform.settings.settings-tax.read",
+                    "action": "read"
+                  }
+                ]
+              },
+              {
+                "key": "/dashboard/settings/preferences",
+                "name": "Fees & Charges",
+                "route": "/dashboard/settings/preferences",
+                "sortOrder": 60,
+                "permissions": [
+                  {
+                    "key": "platform.settings.preferences.read",
+                    "action": "read"
+                  }
+                ]
+              },
+              {
+                "key": "/dashboard/policies",
+                "name": "Policies",
+                "route": "/dashboard/policies",
+                "sortOrder": 70,
+                "permissions": [
+                  {
+                    "key": "platform.settings.policies.read",
+                    "action": "read"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "key": "integrations",
+            "name": "Integrations",
+            "route": "/dashboard/integrations",
+            "icon": "settings",
+            "sortOrder": 60,
             "permissions": [
               {
                 "key": "platform.integrations.read",
@@ -268,7 +358,7 @@ const PRODUCTS = [
             "name": "System",
             "route": "/dashboard/system-health",
             "icon": "settings",
-            "sortOrder": 60,
+            "sortOrder": 70,
             "permissions": [
               {
                 "key": "platform.systemHealth.read",
@@ -319,7 +409,7 @@ const PRODUCTS = [
             "name": "Organizations",
             "route": "/dashboard/platform/organizations",
             "icon": "apps",
-            "sortOrder": 70,
+            "sortOrder": 80,
             "permissions": [
               {
                 "key": "platform.organizations.read",
@@ -345,7 +435,7 @@ const PRODUCTS = [
             "name": "Products & Modules",
             "route": "/dashboard/platform/taxonomy",
             "icon": "apps",
-            "sortOrder": 80,
+            "sortOrder": 90,
             "permissions": [
               {
                 "key": "platform.iamTaxonomy.read",
@@ -371,7 +461,7 @@ const PRODUCTS = [
             "name": "Permissions",
             "route": "/dashboard/platform/permissions",
             "icon": "settings",
-            "sortOrder": 90,
+            "sortOrder": 100,
             "permissions": [
               {
                 "key": "platform.permissions.read",
@@ -397,7 +487,7 @@ const PRODUCTS = [
             "name": "Approval Chains",
             "route": "/dashboard/platform/approval-chains",
             "icon": "docs",
-            "sortOrder": 100,
+            "sortOrder": 110,
             "permissions": [
               {
                 "key": "platform.approvalChains.read",
@@ -423,7 +513,7 @@ const PRODUCTS = [
             "name": "Feature Flags",
             "route": "/dashboard/platform/feature-flags",
             "icon": "settings",
-            "sortOrder": 110,
+            "sortOrder": 120,
             "permissions": [
               {
                 "key": "platform.featureFlags.read",
@@ -847,9 +937,9 @@ const PRODUCTS = [
           },
           {
             "key": "payouts",
-            "name": "Hosts",
+            "name": "Payouts & Settlements",
             "route": "/dashboard/finance/bank-accounts",
-            "icon": "people",
+            "icon": "cash",
             "sortOrder": 40,
             "permissions": [
               {
@@ -1395,122 +1485,38 @@ const PRODUCTS = [
             ]
           },
           {
-            "key": "settings",
+            "key": "masterData",
             "name": "Master Data",
-            "route": "/dashboard/general-settings",
+            "route": "/dashboard/settings/cities",
             "icon": "docs",
             "sortOrder": 110,
             "permissions": [
               {
-                "key": "operations.settings.read",
+                "key": "operations.masterData.read",
                 "action": "read"
               },
               {
-                "key": "operations.settings.create",
+                "key": "operations.masterData.create",
                 "action": "create"
               },
               {
-                "key": "operations.settings.update",
+                "key": "operations.masterData.update",
                 "action": "update"
               },
               {
-                "key": "operations.settings.delete",
+                "key": "operations.masterData.delete",
                 "action": "delete"
               }
             ],
             "subModules": [
               {
-                "key": "/dashboard/general-settings",
-                "name": "General",
-                "route": "/dashboard/general-settings",
-                "sortOrder": 10,
-                "permissions": [
-                  {
-                    "key": "operations.settings.general-settings.read",
-                    "action": "read"
-                  }
-                ]
-              },
-              {
-                "key": "/dashboard/settings-business",
-                "name": "Company Profile",
-                "route": "/dashboard/settings-business",
-                "sortOrder": 20,
-                "permissions": [
-                  {
-                    "key": "operations.settings.settings-business.read",
-                    "action": "read"
-                  }
-                ]
-              },
-              {
-                "key": "/dashboard/settings-payments",
-                "name": "Payment Gateways",
-                "route": "/dashboard/settings-payments",
-                "sortOrder": 30,
-                "permissions": [
-                  {
-                    "key": "operations.settings.settings-payments.read",
-                    "action": "read"
-                  }
-                ]
-              },
-              {
-                "key": "/dashboard/settings-maps",
-                "name": "Maps",
-                "route": "/dashboard/settings-maps",
-                "sortOrder": 40,
-                "permissions": [
-                  {
-                    "key": "operations.settings.settings-maps.read",
-                    "action": "read"
-                  }
-                ]
-              },
-              {
-                "key": "/dashboard/settings-tax",
-                "name": "Tax",
-                "route": "/dashboard/settings-tax",
-                "sortOrder": 50,
-                "permissions": [
-                  {
-                    "key": "operations.settings.settings-tax.read",
-                    "action": "read"
-                  }
-                ]
-              },
-              {
-                "key": "/dashboard/settings/preferences",
-                "name": "Fees & Charges",
-                "route": "/dashboard/settings/preferences",
-                "sortOrder": 60,
-                "permissions": [
-                  {
-                    "key": "operations.settings.preferences.read",
-                    "action": "read"
-                  }
-                ]
-              },
-              {
-                "key": "/dashboard/policies",
-                "name": "Policies",
-                "route": "/dashboard/policies",
-                "sortOrder": 70,
-                "permissions": [
-                  {
-                    "key": "operations.settings.policies.read",
-                    "action": "read"
-                  }
-                ]
-              },
-              {
                 "key": "/dashboard/settings/cities",
                 "name": "Service Areas",
                 "route": "/dashboard/settings/cities",
-                "sortOrder": 80,
+                "sortOrder": 10,
                 "permissions": [
                   {
-                    "key": "operations.settings.cities.read",
+                    "key": "operations.masterData.settings.cities.read",
                     "action": "read"
                   }
                 ]
@@ -1519,10 +1525,10 @@ const PRODUCTS = [
                 "key": "/dashboard/settings/protection-plan",
                 "name": "Protection Plans",
                 "route": "/dashboard/settings/protection-plan",
-                "sortOrder": 90,
+                "sortOrder": 20,
                 "permissions": [
                   {
-                    "key": "operations.settings.protection-plan.read",
+                    "key": "operations.masterData.settings.protection-plan.read",
                     "action": "read"
                   }
                 ]
