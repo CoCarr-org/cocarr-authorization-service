@@ -124,8 +124,23 @@ hand-written routers drift, and what drifts first is which routes need auth.
 - **Policy conditions** (`policy.condition` JSON stored, not evaluated) — ABAC.
 - Wildcard permission keys at runtime, tests.
 
-## Verified
-Syntax-clean; full require graph loads; live HTTP smoke test (health/docs,
-`/authorize` guard path, roles validation 400, resolution routes, 404) with the
-DB intentionally unreachable. Full resolution (deny-override, expiry, delegation)
-needs a MySQL instance — see cocarr-devops compose.
+## Verified — against a real MySQL
+`db.sync({alter:true})` creates all **19 tables** in one clean pass (no aborted
+sync, so nothing is silently missing). `seedTaxonomy.js --confirm` writes the
+full tree — 3 products, 27 modules, 63 sub-modules, 171 permissions, 4 sets, 8
+roles, 2 chains — and a re-run recognises all 281 rows and creates no duplicates.
+
+Live resolution, confirmed end to end:
+- **Permission sets fold in**: operations-agent resolves to 53 permissions (52
+  from `operations.read-only` plus the direct `operations.bookings.update`).
+- **Deny wins** over a set-granted permission: 53 → 52, and `/authorize` refuses.
+- **Temporary access** needs no cron — an assignment expiring in 3s grants 15
+  permissions, then 0 once the window passes; an already-expired one grants 0.
+- **Delegation** hands the delegatee the lent role's 15 permissions.
+- `GET /me/navigation` returns 11 modules / 41 routes for that principal, with
+  `bookings` carrying `["read","update"]` and its four screens.
+- Every access change lands in `auditLogs`.
+
+Cross-service: cocarr-workspace-api enforcing against this service refuses an
+operations-agent (`403 workspace.employees.read`) and serves an hr-manager, whose
+`POST /departments` writes a real row.
