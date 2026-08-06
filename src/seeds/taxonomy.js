@@ -586,6 +586,18 @@ const PRODUCTS = [
                     "action": "read"
                   }
                 ]
+              },
+              {
+                "key": "/dashboard/workspace/onboarding",
+                "name": "Onboarding",
+                "route": "/dashboard/workspace/onboarding",
+                "sortOrder": 20,
+                "permissions": [
+                  {
+                    "key": "workspace.employees.workspace.onboarding.read",
+                    "action": "read"
+                  }
+                ]
               }
             ]
           },
