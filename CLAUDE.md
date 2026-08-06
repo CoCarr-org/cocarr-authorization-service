@@ -84,6 +84,41 @@ set it holds. Editing a set edits every role holding it, immediately — that is
 the point, and the thing to be careful about. An inactive set grants nothing, so
 deactivating one actually removes access rather than just hiding it.
 
+## The bootstrap owner — the account that cannot lock itself out
+`src/services/bootstrapOwnerService.js`. **`BOOTSTRAP_OWNER_EMAIL`** (default
+`cocarrluxury23@gmail.com`) always holds `super-admin`.
+
+A seeded IAM grants nobody anything — 171 permissions and 8 roles, zero
+assignments — and every endpoint that could create the first assignment itself
+requires a permission. Without this, a fresh database is administrable by
+nobody. Same purpose as core-api's `ensureBootstrapSuperAdmin`.
+
+**It runs at AUTHENTICATION time, not at boot**, and that is forced by the
+design: this service holds no identity data (`principalId` is an opaque string,
+no email column anywhere), so there is nothing to look an email up against at
+boot. The email only ever arrives on a request, minted by the gateway or read
+off the verified token, next to the principal id it belongs to.
+
+- **It re-checks on every request, which is the lockout guarantee.** A revoked
+  or expired owner assignment is restored on the owner's next request, so a
+  mistake in the IAM UI cannot permanently lock the platform's owner out of it.
+- **It creates a REAL `roleAssignment`**, not a special case inside resolution.
+  A hidden rule granting access with no row would be invisible in the
+  assignments list and in `/principals/:id/navigation` — the two places someone
+  looks to answer "why does this person have this?" — and would make the owner
+  the one principal whose access the data could not explain.
+- **`ensure()` never throws.** It runs inside `authenticate`; a DB blip must not
+  turn a valid request into a 500. It returns early on a string compare for
+  every other account, so the normal path costs nothing.
+- Falls back to the Firebase uid when `identityId` is absent (the owner signed
+  in before `POST /v1/auth/verify` created their identity row) — the same
+  fallback `navigationController` uses.
+- If the `super-admin` role is missing it logs and names `seedTaxonomy.js`
+  rather than failing silently.
+
+`node scripts/verifyBootstrapOwner.js` exercises all of the above against
+stubbed models — no MySQL needed.
+
 ## Seeding — `scripts/seedTaxonomy.js`
 ```
 node scripts/seedTaxonomy.js --dry-run     # touches NO database, runs anywhere

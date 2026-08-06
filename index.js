@@ -22,6 +22,11 @@ app.use('/v1', rootRouter);
 app.use(errorHandlerMiddleware);
 
 const PORT = process.env.PORT || 3060;
+// Say who the break-glass owner is at boot. Nobody holds a role on a freshly
+// seeded IAM, so this line is the answer to "who can administer this?" — and it
+// makes a typo'd BOOTSTRAP_OWNER_EMAIL visible in the deploy log instead of
+// presenting later as an owner who mysteriously has no access.
+Logger.info(`[bootstrap-owner] Owner account: ${require('./src/services/bootstrapOwnerService').OWNER_EMAIL}`);
 db.sync({ alter: true })
   .then(() => Logger.info('Authorization (IAM) schema synced.'))
   .catch((err) => Logger.error(`Schema sync failed: ${err.message}`))
