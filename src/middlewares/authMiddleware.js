@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const { CustomError } = require('./error');
 const fb = require('../helper/firebaseAdmin');
 const Logger = require('../helper/logger');
+const bootstrapOwner = require('../services/bootstrapOwnerService');
 
 // AUTHENTICATION — three modes, tried in this order, and NONE of them fail open.
 //
@@ -59,6 +60,16 @@ function gatewayKeyMatches(presented) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
+// The one point every authenticated request passes through, and the only place
+// an email and the principal id it belongs to are both in hand — so it is where
+// the bootstrap owner's super-admin assignment is kept alive. `ensure` never
+// throws and returns immediately for every other account, so this costs a
+// string compare on the normal path.
+async function admit(req, next) {
+  await bootstrapOwner.ensure(req.actor);
+  return next();
+}
+
 async function authenticate(req, res, next) {
   try {
     // 1 — trusted edge. Only consulted when WE hold a key; without one the
@@ -80,13 +91,13 @@ async function authenticate(req, res, next) {
         identityId: req.headers['x-identity-id'] || null,
         via: 'gateway',
       };
-      return next();
+      return admit(req, next);
     }
 
     // 2 — dev bypass (impossible in production; see DEV_BYPASS).
     if (DEV_BYPASS) {
       req.actor = { uid: 'dev', name: 'dev', email: 'dev@local', identityId: null, via: 'dev-bypass' };
-      return next();
+      return admit(req, next);
     }
 
     // 3 — direct bearer token.
@@ -105,7 +116,7 @@ async function authenticate(req, res, next) {
       identityId: null,
       via: 'token',
     };
-    return next();
+    return admit(req, next);
   } catch (err) {
     return next(err instanceof CustomError ? err : new CustomError('Invalid token', 401, 'UNAUTHENTICATED'));
   }
