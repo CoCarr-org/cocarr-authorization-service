@@ -98,6 +98,18 @@ const PRODUCTS = [
                     "action": "read"
                   }
                 ]
+              },
+              {
+                "key": "/dashboard/platform/roles",
+                "name": "Role Permissions",
+                "route": "/dashboard/platform/roles",
+                "sortOrder": 20,
+                "permissions": [
+                  {
+                    "key": "platform.roles.platform.roles.read",
+                    "action": "read"
+                  }
+                ]
               }
             ]
           },
@@ -595,6 +607,18 @@ const PRODUCTS = [
                 "permissions": [
                   {
                     "key": "workspace.employees.workspace.onboarding.read",
+                    "action": "read"
+                  }
+                ]
+              },
+              {
+                "key": "/dashboard/workspace/approvals",
+                "name": "Approvals",
+                "route": "/dashboard/workspace/approvals",
+                "sortOrder": 30,
+                "permissions": [
+                  {
+                    "key": "workspace.employees.workspace.approvals.read",
                     "action": "read"
                   }
                 ]
