@@ -106,6 +106,18 @@ async function ensure(actor) {
   }
 }
 
+// Is this assignment the owner's protected super-admin grant?
+//
+// Matched on the `grantedByUid` stamp this service writes, not on the principal
+// id — the owner's principal changes when their identity row appears (uid ->
+// identity uuid), so a principal-based check would stop protecting the grant at
+// exactly the moment it started mattering. Every row this service creates is
+// protected; a super-admin grant somebody made by hand is not, and should still
+// be revocable.
+function isOwnerAssignment(assignment) {
+  return Boolean(assignment) && assignment.grantedByUid === 'system:bootstrap-owner';
+}
+
 module.exports = {
-  ensure, isOwnerEmail, OWNER_EMAIL, SUPER_ADMIN_ROLE_KEY,
+  ensure, isOwnerEmail, isOwnerAssignment, OWNER_EMAIL, SUPER_ADMIN_ROLE_KEY,
 };
