@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const { CustomError } = require('../middlewares/error');
 const { RoleAssignment, Role } = require('../models');
 const audit = require('./auditService');
+const bootstrapOwner = require('./bootstrapOwnerService');
 
 // Assign a role to a principal. `expiresAt` (optional) makes it TEMPORARY ACCESS.
 async function assign({
@@ -24,6 +25,25 @@ async function assign({
 async function revoke(id, actorUid) {
   const a = await RoleAssignment.findByPk(id);
   if (!a) throw new CustomError('Assignment not found', 404, 'NOT_FOUND');
+
+  // THE OWNER'S SUPER-ADMIN GRANT CANNOT BE REVOKED HERE.
+  //
+  // bootstrapOwnerService would restore it on their very next request anyway, so
+  // allowing the revoke would show a confirmation, appear to work, and silently
+  // undo itself — the worst of both, because someone would believe they had
+  // narrowed the owner's access. Refusing says the true thing instead.
+  //
+  // Enforced on the server, not just hidden in the UI: a control that only
+  // exists in a screen is not a control.
+  if (bootstrapOwner.isOwnerAssignment(a)) {
+    throw new CustomError(
+      `${bootstrapOwner.OWNER_EMAIL} is the platform owner and always holds ${bootstrapOwner.SUPER_ADMIN_ROLE_KEY}. `
+      + 'This grant cannot be revoked — it is restored automatically on their next request. '
+      + 'Change BOOTSTRAP_OWNER_EMAIL to move ownership.',
+      409, 'OWNER_PROTECTED',
+    );
+  }
+
   await a.update({ revokedAt: new Date() });
   await audit.log({ actorUid, action: 'assignment.revoke', targetType: 'principal', targetId: a.principalId, changes: { assignmentId: id } });
   return { success: true };

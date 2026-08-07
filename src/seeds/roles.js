@@ -50,6 +50,24 @@ const ROLES = [
     permissionSets: [],
   },
   {
+    // THE DEFAULT ROLE every employee gets at onboarding, and the floor nobody
+    // drops below. Without it a newly onboarded employee holds nothing at all:
+    // an empty sidebar and a 403 on every call, which reads as a broken account
+    // rather than "your access has not been decided yet".
+    //
+    // It grants exactly one thing — reading the employee directory — because a
+    // baseline that grants nothing is indistinguishable from no role, and a
+    // baseline that grants more becomes the thing everybody silently has. A
+    // super admin assigns the real role afterwards; this is the starting point,
+    // not the destination.
+    key: 'employee',
+    name: 'Employee',
+    description: 'Baseline access for every onboarded employee. Specific roles are assigned on top.',
+    isSystem: true,
+    permissions: ['workspace.employees.read'],
+    permissionSets: [],
+  },
+  {
     key: 'platform-admin',
     name: 'Platform Administrator',
     description: 'Administers IAM, settings and system health — not the car-sharing business.',
