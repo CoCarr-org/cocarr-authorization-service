@@ -21,6 +21,8 @@ const Delegation = require('./delegation');
 const Organization = require('./organization');
 const ApprovalChain = require('./approvalChain');
 const ApprovalStep = require('./approvalStep');
+const ApprovalRequest = require('./approvalRequest');
+const ApprovalDecision = require('./approvalDecision');
 const FeatureFlag = require('./featureFlag');
 const GlobalSetting = require('./globalSetting');
 const AuditLog = require('./auditLog');
@@ -71,10 +73,17 @@ ApprovalChain.hasMany(ApprovalStep, { as: 'steps', foreignKey: 'chainId' });
 ApprovalStep.belongsTo(ApprovalChain, { foreignKey: 'chainId' });
 ApprovalStep.belongsTo(Role, { as: 'approverRole', foreignKey: 'approverRoleId' });
 
+// A request walks one chain and collects decisions as it goes.
+ApprovalChain.hasMany(ApprovalRequest, { foreignKey: 'chainId' });
+ApprovalRequest.belongsTo(ApprovalChain, { foreignKey: 'chainId' });
+ApprovalRequest.hasMany(ApprovalDecision, { as: 'decisions', foreignKey: 'requestId' });
+ApprovalDecision.belongsTo(ApprovalRequest, { foreignKey: 'requestId' });
+
 module.exports = {
   db,
   Product, Portal, Module, SubModule, Permission,
   PermissionSet, PermissionSetPermission, RolePermissionSet,
   Role, RolePermission, RoleAssignment, Policy, Delegation,
-  Organization, ApprovalChain, ApprovalStep, FeatureFlag, GlobalSetting, AuditLog,
+  Organization, ApprovalChain, ApprovalStep, ApprovalRequest, ApprovalDecision,
+  FeatureFlag, GlobalSetting, AuditLog,
 };

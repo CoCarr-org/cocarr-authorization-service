@@ -22,6 +22,8 @@ router.use('/delegations', require('./delegationRouter'));
 // Platform administration
 router.use('/organizations', require('./organizationRouter'));
 router.use('/approval-chains', require('./approvalChainRouter'));
+// The chains describe a process; these are the requests actually walking one.
+router.use('/approval-requests', require('./approvalRequestRouter'));
 router.use('/feature-flags', require('./featureFlagRouter'));
 router.use('/settings', require('./settingRouter'));
 router.use('/audit', require('./auditRouter'));
