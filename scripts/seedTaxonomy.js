@@ -160,7 +160,11 @@ async function seedSetsRolesChains() {
     const role = await upsert(
       Role, { key: r.key },
       {
-        name: r.name, description: r.description, isSuperAdmin: Boolean(r.isSuperAdmin), isSystem: true,
+        name: r.name,
+        description: r.description,
+        isSuperAdmin: Boolean(r.isSuperAdmin),
+        isSystem: true,
+        department: r.department || null,
       },
     );
     stats.roles += 1;

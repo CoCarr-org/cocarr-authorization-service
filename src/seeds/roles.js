@@ -42,6 +42,7 @@ const PERMISSION_SETS = [
 const ROLES = [
   {
     key: 'super-admin',
+    department: 'EXEC',
     name: 'Super Administrator',
     description: 'Every permission, everywhere. Resolution short-circuits for this role.',
     isSuperAdmin: true,
@@ -69,6 +70,7 @@ const ROLES = [
   },
   {
     key: 'platform-admin',
+    department: 'TECH',
     name: 'Platform Administrator',
     description: 'Administers IAM, settings and system health — not the car-sharing business.',
     isSystem: true,
@@ -77,6 +79,7 @@ const ROLES = [
   },
   {
     key: 'operations-manager',
+    department: 'OPS',
     name: 'Operations Manager',
     description: 'Full access to the car-sharing operations product.',
     isSystem: true,
@@ -85,6 +88,7 @@ const ROLES = [
   },
   {
     key: 'operations-agent',
+    department: 'OPS',
     name: 'Operations Agent',
     description: 'Reads everything in operations; may act on bookings only.',
     isSystem: true,
@@ -93,6 +97,7 @@ const ROLES = [
   },
   {
     key: 'finance-manager',
+    department: 'FIN',
     name: 'Finance Manager',
     description: 'Payments, payouts, refunds and settlements.',
     isSystem: true,
@@ -101,6 +106,7 @@ const ROLES = [
   },
   {
     key: 'support-agent',
+    department: 'SUP',
     name: 'Support Agent',
     description: 'Support queues, plus read-only customer and booking context.',
     isSystem: true,
@@ -109,6 +115,7 @@ const ROLES = [
   },
   {
     key: 'hr-manager',
+    department: 'PPL',
     name: 'HR Manager',
     description: 'The whole employee lifecycle: recruitment, onboarding, org structure, access requests.',
     isSystem: true,
@@ -117,10 +124,93 @@ const ROLES = [
   },
   {
     key: 'recruiter',
+    department: 'PPL',
     name: 'Recruiter',
     description: 'Candidates and onboarding; reads employees for context.',
     isSystem: true,
     permissions: ['workspace.recruitment.*', 'workspace.employees.read'],
+    permissionSets: [],
+  },
+
+  // ── the gaps ────────────────────────────────────────────────────────────
+  //
+  // Eight departments existed with roles for only five of them, so Technology,
+  // Growth and Risk had people and nothing to assign them. Each of these is a
+  // function the Access Matrix spec already names — they were simply never
+  // seeded, which left the org chart and the permission model disagreeing about
+  // which functions the business has.
+  //
+  // Every department now has a MANAGER and, where the work is genuinely split
+  // by seniority, an agent tier. That pairing is what a role means here: it is
+  // the old team-and-level combined, so Operations Manager and Operations Agent
+  // are two roles rather than two levels of one.
+  {
+    key: 'developer',
+    department: 'TECH',
+    name: 'Developer / DevOps',
+    description: 'System health, integrations and feature flags. Reads the audit trail; administers no accounts.',
+    isSystem: true,
+    permissions: [
+      'platform.systemHealth.*', 'platform.integrations.*', 'platform.featureFlags.*',
+      'platform.auditLogs.read',
+    ],
+    permissionSets: [],
+  },
+  {
+    key: 'fleet-manager',
+    department: 'OPS',
+    name: 'Fleet Manager',
+    description: 'Vehicles and hosts — onboarding, RC verification, approvals and availability.',
+    isSystem: true,
+    permissions: ['operations.vehicles.*', 'operations.hosts.*', 'operations.masterData.read'],
+    permissionSets: [],
+  },
+  {
+    key: 'support-manager',
+    department: 'SUP',
+    name: 'Support Manager',
+    description: 'Runs the support desk: tickets, escalations and the bookings behind them.',
+    isSystem: true,
+    permissions: [
+      'operations.support.*', 'operations.bookings.*', 'operations.users.read',
+      'operations.dashboard.read',
+    ],
+    permissionSets: [],
+  },
+  {
+    key: 'finance-analyst',
+    department: 'FIN',
+    name: 'Finance Analyst',
+    description: 'Reads payments, payouts and reports. Deliberately no write access to money.',
+    isSystem: true,
+    permissions: ['operations.payments.read', 'operations.payouts.read', 'operations.reports.read'],
+    permissionSets: [],
+  },
+  {
+    key: 'marketing-manager',
+    department: 'GRW',
+    name: 'Marketing Manager',
+    description: 'Campaigns, referrals and offers, with the reporting to judge them.',
+    isSystem: true,
+    permissions: ['operations.marketing.*', 'operations.reports.read', 'operations.dashboard.read'],
+    permissionSets: [],
+  },
+  {
+    key: 'analytics-viewer',
+    department: 'GRW',
+    name: 'Analytics Viewer',
+    description: 'Reports and dashboards, read-only. The narrowest role that is still useful.',
+    isSystem: true,
+    permissions: ['operations.reports.read', 'operations.dashboard.read'],
+    permissionSets: [],
+  },
+  {
+    key: 'compliance-officer',
+    department: 'RSK',
+    name: 'KYC & Compliance Officer',
+    description: 'Identity and document review for riders and hosts — the approval side of onboarding.',
+    isSystem: true,
+    permissions: ['operations.users.*', 'operations.hosts.read', 'operations.dashboard.read'],
     permissionSets: [],
   },
 ];
