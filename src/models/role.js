@@ -10,5 +10,16 @@ const Role = db.define('role', {
   // same idea as core-api's team.key === 'super-admin' short-circuit.
   isSuperAdmin: { type: DataTypes.BOOLEAN, defaultValue: false },
   isSystem: { type: DataTypes.BOOLEAN, defaultValue: false },
+  // WHICH PART OF THE BUSINESS THIS ROLE BELONGS TO — a label, never a foreign
+  // key. Departments live in cocarr-workspace-api and IAM holds no cross-service
+  // FKs anywhere else either; this exists so the permission matrix can be
+  // grouped the way an administrator actually thinks ("what may Operations
+  // do?") without inventing a second axis of access control.
+  //
+  // ACCESS IS STILL THE ROLE ALONE. A role already encodes team AND level —
+  // operations-manager IS "Operations, at manager level" — so scoping grants by
+  // department as well would re-split what the model deliberately joined, and
+  // give two places to define one thing.
+  department: { type: DataTypes.STRING, allowNull: true },
 });
 module.exports = Role;

@@ -5,7 +5,7 @@ const audit = require('./auditService');
 
 const crud = createCrudService({
   model: Role, entityType: 'Role', searchable: ['key', 'name'],
-  allowed: ['key', 'name', 'description', 'isSuperAdmin', 'isSystem'],
+  allowed: ['key', 'name', 'description', 'isSuperAdmin', 'isSystem', 'department'],
 });
 
 async function getWithPermissions(id) {
