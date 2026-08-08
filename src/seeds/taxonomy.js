@@ -691,7 +691,7 @@ const PRODUCTS = [
           {
             "key": "recruitment",
             "name": "Recruitment",
-            "route": "/dashboard/workspace/candidates",
+            "route": "/dashboard/workspace/jobs",
             "icon": "people",
             "sortOrder": 30,
             "permissions": [
@@ -710,14 +710,30 @@ const PRODUCTS = [
               {
                 "key": "workspace.recruitment.delete",
                 "action": "delete"
+              },
+              {
+                "key": "workspace.recruitment.approve",
+                "action": "approve"
               }
             ],
             "subModules": [
               {
+                "key": "/dashboard/workspace/jobs",
+                "name": "Jobs",
+                "route": "/dashboard/workspace/jobs",
+                "sortOrder": 10,
+                "permissions": [
+                  {
+                    "key": "workspace.recruitment.workspace.jobs.read",
+                    "action": "read"
+                  }
+                ]
+              },
+              {
                 "key": "/dashboard/workspace/candidates",
                 "name": "Candidates",
                 "route": "/dashboard/workspace/candidates",
-                "sortOrder": 10,
+                "sortOrder": 20,
                 "permissions": [
                   {
                     "key": "workspace.recruitment.workspace.candidates.read",

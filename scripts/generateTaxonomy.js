@@ -94,6 +94,13 @@ const PRODUCTS = [
 
 const CRUD = ['read', 'create', 'update', 'delete'];
 
+// Actions a module needs BEYOND plain CRUD. Recruitment adds `approve` so that
+// "who can post a job" (update) and "who can approve a posting for the public
+// site" (approve) are grantable separately — separation of duties for the
+// job-posting approval workflow. Kept here rather than hand-edited into the
+// generated taxonomy so a regenerate does not drop it.
+const MODULE_EXTRA_ACTIONS = { recruitment: ['approve'] };
+
 function slugOf(route, moduleKey) {
   let segs = route.replace('/dashboard', '').split('/').filter(Boolean);
   if (segs[0] === moduleKey) segs = segs.slice(1);
@@ -165,7 +172,8 @@ async function build() {
         route: m.route,
         icon: m.icon,
         sortOrder: (i + 1) * 10,
-        permissions: CRUD.map((a) => ({ key: `${p.key}.${m.key}.${a}`, action: a })),
+        permissions: [...CRUD, ...(MODULE_EXTRA_ACTIONS[m.key] || [])]
+          .map((a) => ({ key: `${p.key}.${m.key}.${a}`, action: a })),
         subModules: subs,
       };
     });
