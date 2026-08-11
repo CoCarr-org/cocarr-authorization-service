@@ -1088,10 +1088,22 @@ const PRODUCTS = [
                 ]
               },
               {
+                "key": "/dashboard/vehicles/approvals",
+                "name": "Approvals",
+                "route": "/dashboard/vehicles/approvals",
+                "sortOrder": 20,
+                "permissions": [
+                  {
+                    "key": "operations.vehicles.approvals.read",
+                    "action": "read"
+                  }
+                ]
+              },
+              {
                 "key": "/dashboard/vehicles/rc",
                 "name": "Vehicle RC Details",
                 "route": "/dashboard/vehicles/rc",
-                "sortOrder": 20,
+                "sortOrder": 30,
                 "permissions": [
                   {
                     "key": "operations.vehicles.rc.read",
@@ -1103,7 +1115,7 @@ const PRODUCTS = [
                 "key": "/dashboard/availability-schedule",
                 "name": "Scheduling",
                 "route": "/dashboard/availability-schedule",
-                "sortOrder": 30,
+                "sortOrder": 40,
                 "permissions": [
                   {
                     "key": "operations.vehicles.availability-schedule.read",
@@ -1115,7 +1127,7 @@ const PRODUCTS = [
                 "key": "/dashboard/settings/brands",
                 "name": "Vehicle Brands",
                 "route": "/dashboard/settings/brands",
-                "sortOrder": 40,
+                "sortOrder": 50,
                 "permissions": [
                   {
                     "key": "operations.vehicles.settings.brands.read",
@@ -1127,7 +1139,7 @@ const PRODUCTS = [
                 "key": "/dashboard/settings/pickup-points",
                 "name": "Pickup Points",
                 "route": "/dashboard/settings/pickup-points",
-                "sortOrder": 50,
+                "sortOrder": 60,
                 "permissions": [
                   {
                     "key": "operations.vehicles.settings.pickup-points.read",
