@@ -8,7 +8,7 @@ fs.mkdirSync('logs', { recursive: true });
 
 const Logger = require('./src/helper/logger');
 const { db } = require('./src/models');
-const rootRouter = require('./src/routes/rootRouter');
+const { mountVersions } = require('./src/routes/apiVersions');
 const { errorHandlerMiddleware } = require('./src/middlewares/error');
 
 const app = express();
@@ -18,7 +18,9 @@ else { app.use(cors({ origin: (o, cb) => (!o || CORS_ORIGINS.includes(o) ? cb(nu
 
 app.use(bodyParser.json({ limit: '2mb' }));
 app.use(bodyParser.urlencoded({ limit: '2mb', extended: true }));
-app.use('/v1', rootRouter);
+// Every supported API version is mounted from one registry, which also emits
+// the Deprecation/Sunset headers and serves GET /versions.
+mountVersions(app, { log: Logger });
 app.use(errorHandlerMiddleware);
 
 const PORT = process.env.PORT || 3060;
@@ -47,13 +49,39 @@ Logger.info(`[bootstrap-owner] Owner account: ${require('./src/services/bootstra
 // reported as that rather than as a confusing sync error. Never throws.
 const { preflight } = require('./src/configs/dbPreflight');
 
+const { status: migrationStatus } = require('./src/db/migrator');
+
+// THE SERVICE NO LONGER CHANGES THE SCHEMA. Migrations do, as a release step
+// (`npm run migrate:up`), before the new revision takes traffic.
+//
+// This service is the reason that matters most. `db.sync({alter:true})` aborts
+// its WHOLE pass on one bad foreign key, and every model after the failure
+// point silently never gets a table — which is exactly how `roleAssignments`
+// went missing. And a missing roleAssignments table does not break one screen:
+// bootstrapOwnerService writes a row there at AUTHENTICATION time, so every
+// authenticated request on the entire platform 500s, including
+// /me/navigation, which every panel renders its sidebar from.
+//
+// Boot now only REPORTS drift. Development can still use sync via DB_SYNC=true.
 preflight(db, Logger)
-  .then(({ ok }) => {
-    // Skip the sync entirely when the database is unreachable: it can only
-    // produce a second, noisier version of the error already reported, and
-    // burying the real cause under it is how this went unnoticed.
-    if (!ok) return Object.assign(Promise.reject(new Error('database unreachable')), {});
-    return db.sync({ alter: true }).then(() => Logger.info('Authorization (IAM) schema synced.'));
+  .then(async ({ ok }) => {
+    if (!ok) return; // already reported, in detail, by the preflight
+
+    if (process.env.DB_SYNC === 'true' && process.env.NODE_ENV !== 'production') {
+      Logger.error('DB_SYNC=true — using db.sync({alter:true}). Development only; never set this in production.');
+      await db.sync({ alter: true });
+      Logger.info('Authorization (IAM) schema synced (DB_SYNC).');
+      return;
+    }
+
+    const { executed, pending } = await migrationStatus();
+    if (pending.length) {
+      Logger.error('!!! PENDING MIGRATIONS — THIS REVISION IS RUNNING AGAINST AN OLD SCHEMA !!!');
+      Logger.error(`  pending (${pending.length}): ${pending.join(', ')}`);
+      Logger.error('  Run `npm run migrate:up` as a release step BEFORE this revision takes traffic.');
+      return;
+    }
+    Logger.info(`Schema up to date — ${executed.length} migration(s) applied.`);
   })
   .catch((err) => {
     // The preflight already reported an unreachable database, in detail.
