@@ -27,9 +27,43 @@ const PORT = process.env.PORT || 3060;
 // makes a typo'd BOOTSTRAP_OWNER_EMAIL visible in the deploy log instead of
 // presenting later as an owner who mysteriously has no access.
 Logger.info(`[bootstrap-owner] Owner account: ${require('./src/services/bootstrapOwnerService').OWNER_EMAIL}`);
-db.sync({ alter: true })
-  .then(() => Logger.info('Authorization (IAM) schema synced.'))
-  .catch((err) => Logger.error(`Schema sync failed: ${err.message}`))
+// A FAILED SYNC IS NOT A WARNING — IT IS A BROKEN SERVICE THAT STILL BOOTS.
+//
+// alter:true rewrites every table on every boot, and when it throws PARTWAY
+// every model after the failure point silently never gets created. This used to
+// log one error line and start the server anyway, so the first symptom was
+// `Table 'cocarr_iam.roleAssignments' doesn't exist` on a service whose startup
+// looked fine.
+//
+// That table in particular takes the whole platform down rather than one
+// screen: bootstrapOwnerService.ensure() writes a roleAssignment at
+// AUTHENTICATION time, so every authenticated request 500s — including
+// /me/navigation, which every panel renders its sidebar from.
+//
+// Still boots on failure, deliberately: refusing to start would hide the
+// reason, and /health is how you find out. But it says so in a way nobody
+// scrolls past, and names the script that repairs it.
+// Classify the connection BEFORE sync, so "the schema does not exist" is
+// reported as that rather than as a confusing sync error. Never throws.
+const { preflight } = require('./src/configs/dbPreflight');
+
+preflight(db, Logger)
+  .then(({ ok }) => {
+    // Skip the sync entirely when the database is unreachable: it can only
+    // produce a second, noisier version of the error already reported, and
+    // burying the real cause under it is how this went unnoticed.
+    if (!ok) return Object.assign(Promise.reject(new Error('database unreachable')), {});
+    return db.sync({ alter: true }).then(() => Logger.info('Authorization (IAM) schema synced.'));
+  })
+  .catch((err) => {
+    // The preflight already reported an unreachable database, in detail.
+    if (err.message === 'database unreachable') return;
+    Logger.error('!!! SCHEMA SYNC FAILED — TABLES MAY BE MISSING !!!');
+    Logger.error(`  reason: ${err?.parent?.sqlMessage || err.message}`);
+    Logger.error('  Every model after the failure point has no table. Authenticated');
+    Logger.error('  requests will 500 if roleAssignments is among them.');
+    Logger.error('  Repair:  node scripts/syncTables.js --dry-run  then without the flag.');
+  })
 // Bind with NO host argument, so Node listens on :: with dual-stack and accepts
 // both IPv4 and IPv6. Railway's PRIVATE NETWORK IS IPv6-ONLY: a server bound to
 // '0.0.0.0' is reachable from the public edge and completely unreachable from
